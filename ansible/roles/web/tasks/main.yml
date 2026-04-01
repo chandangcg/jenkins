@@ -1,11 +1,33 @@
-- name: Remove old Node.js
+# -----------------------------
+# FIX BROKEN PACKAGE STATE
+# -----------------------------
+- name: Fix broken dpkg
+  command: dpkg --configure -a
+  become: yes
+  ignore_errors: yes
+
+- name: Remove old Node.js packages
   apt:
-    name: nodejs
+    name:
+      - nodejs
+      - libnode-dev
     state: absent
+    purge: yes
+  become: yes
+  ignore_errors: yes
+
+- name: Clean apt cache
+  apt:
+    autoremove: yes
+    autoclean: yes
   become: yes
 
-- name: Install NodeSource repo
-  shell: curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+# -----------------------------
+# INSTALL NODEJS (CLEAN)
+# -----------------------------
+- name: Add NodeSource repo
+  shell: |
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
   args:
     executable: /bin/bash
   become: yes
@@ -20,12 +42,15 @@
 - name: Check Node version
   command: node -v
   register: node_version
-  become: yes
+  changed_when: false   # ✅ prevents showing as "changed"
 
 - name: Debug Node version
   debug:
     var: node_version.stdout
 
+# -----------------------------
+# INSTALL APP DEPENDENCIES
+# -----------------------------
 - name: Install PM2
   npm:
     name: pm2
@@ -38,6 +63,9 @@
     chdir: /opt/nodeapp
   become: yes
 
+# -----------------------------
+# RUN APPLICATION
+# -----------------------------
 - name: Start Node app with PM2
   shell: |
     pm2 start app.js --name nodeapp || pm2 restart nodeapp
