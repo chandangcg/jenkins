@@ -16,23 +16,31 @@
     state: present
     update_cache: yes
   become: yes
-  - name: Check Node version
+
+- name: Check Node version
   command: node -v
   register: node_version
+  become: yes
 
-- debug:
+- name: Debug Node version
+  debug:
     var: node_version.stdout
-    - name: Install PM2
+
+- name: Install PM2
   npm:
     name: pm2
     global: yes
+  become: yes
+
 - name: Install app dependencies
   shell: npm install
   args:
     chdir: /opt/nodeapp
-    
+  become: yes
+
 - name: Start Node app with PM2
   shell: |
     pm2 start app.js --name nodeapp || pm2 restart nodeapp
   args:
     chdir: /opt/nodeapp
+  become: yes
