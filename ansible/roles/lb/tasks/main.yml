@@ -34,7 +34,7 @@
     name: grafana-server
     state: started
     enabled: yes
-    
+
 - name: Install MySQL Python dependencies
   apt:
     name:
@@ -46,6 +46,7 @@
   mysql_db:
     name: "{{ db_name }}"
     state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
 
 - name: Create DB user
   mysql_user:
@@ -54,6 +55,7 @@
     priv: "{{ db_name }}.*:ALL"
     host: "%"
     state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
 
 - name: Copy Nginx config
   template:
