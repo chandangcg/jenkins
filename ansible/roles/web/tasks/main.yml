@@ -1,32 +1,38 @@
+- name: Remove old Node.js
+  apt:
+    name: nodejs
+    state: absent
+  become: yes
+
+- name: Install NodeSource repo
+  shell: curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+  args:
+    executable: /bin/bash
+  become: yes
+
 - name: Install Node.js
   apt:
-    name:
-      - nodejs
-      - npm
-      - git
+    name: nodejs
     state: present
     update_cache: yes
+  become: yes
+  - name: Check Node version
+  command: node -v
+  register: node_version
 
-- name: Create app directory
-  file:
-    path: "{{ deploy_path }}"
-    state: directory
-
-- name: Copy app files
-  copy:
-    src: app/
-    dest: "{{ deploy_path }}"
-
-- name: Install dependencies
+- debug:
+    var: node_version.stdout
+    - name: Install PM2
   npm:
-    path: "{{ deploy_path }}"
-
-- name: Create .env file
-  template:
-    src: env.j2
-    dest: "{{ deploy_path }}/.env"
-
-- name: Install PM2 and start app
+    name: pm2
+    global: yes
+- name: Install app dependencies
+  shell: npm install
+  args:
+    chdir: /opt/nodeapp
+    
+- name: Start Node app with PM2
   shell: |
-    npm install -g pm2
     pm2 start app.js --name nodeapp || pm2 restart nodeapp
+  args:
+    chdir: /opt/nodeapp
