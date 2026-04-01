@@ -1,0 +1,53 @@
+- name: Install packages
+  apt:
+    name:
+      - nginx
+      - mysql-server
+      - redis-server
+      - prometheus
+    state: present
+    update_cache: yes
+
+- name: Start services
+  service:
+    name: "{{ item }}"
+    state: started
+    enabled: yes
+  loop:
+    - nginx
+    - mysql
+    - redis-server
+    - prometheus
+
+- name: Install Grafana
+  apt:
+    deb: https://dl.grafana.com/oss/release/grafana_10.0.0_amd64.deb
+
+- name: Start Grafana
+  service:
+    name: grafana-server
+    state: started
+    enabled: yes
+
+- name: Create DB
+  mysql_db:
+    name: "{{ db_name }}"
+    state: present
+
+- name: Create DB user
+  mysql_user:
+    name: "{{ db_user }}"
+    password: "{{ db_password }}"
+    priv: "{{ db_name }}.*:ALL"
+    host: "%"
+    state: present
+
+- name: Copy Nginx config
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/sites-available/default
+
+- name: Restart Nginx
+  service:
+    name: nginx
+    state: restarted

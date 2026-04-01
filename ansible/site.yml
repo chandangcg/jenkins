@@ -1,0 +1,15 @@
+---
+- hosts: lb
+  become: yes
+  roles:
+    - lb
+
+- hosts: web
+  become: yes
+  roles:
+    - web
+
+- hosts: jenkins
+  become: yes
+  roles:
+    - jenkins

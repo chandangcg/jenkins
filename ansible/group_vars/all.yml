@@ -1,0 +1,8 @@
+db_name: appdb
+db_user: appuser
+db_password: app123
+
+app_port: 3000
+deploy_path: /opt/nodeapp
+
+lb_ip: 192.168.1.230

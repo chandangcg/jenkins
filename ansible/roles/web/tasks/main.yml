@@ -1,0 +1,32 @@
+- name: Install Node.js
+  apt:
+    name:
+      - nodejs
+      - npm
+      - git
+    state: present
+    update_cache: yes
+
+- name: Create app directory
+  file:
+    path: "{{ deploy_path }}"
+    state: directory
+
+- name: Copy app files
+  copy:
+    src: app/
+    dest: "{{ deploy_path }}"
+
+- name: Install dependencies
+  npm:
+    path: "{{ deploy_path }}"
+
+- name: Create .env file
+  template:
+    src: env.j2
+    dest: "{{ deploy_path }}/.env"
+
+- name: Install PM2 and start app
+  shell: |
+    npm install -g pm2
+    pm2 start app.js --name nodeapp || pm2 restart nodeapp
