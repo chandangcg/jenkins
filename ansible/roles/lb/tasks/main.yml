@@ -34,6 +34,13 @@
     name: grafana-server
     state: started
     enabled: yes
+    
+- name: Install MySQL Python dependencies
+  apt:
+    name:
+      - python3-pymysql
+    state: present
+    update_cache: yes
 
 - name: Create DB
   mysql_db:
