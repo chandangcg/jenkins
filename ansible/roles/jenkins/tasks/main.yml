@@ -1,4 +1,9 @@
-- name: Install Java 17 (Required for newer Jenkins)
+- name: Remove broken Jenkins list file
+  file:
+    path: /etc/apt/sources.list.d/jenkins.list
+    state: absent
+
+- name: Install Java 17
   apt:
     name: openjdk-17-jdk
     state: present
@@ -8,8 +13,9 @@
   get_url:
     url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
     dest: /usr/share/keyrings/jenkins-keyring.asc
+    mode: '0644'
 
-- name: Add Jenkins Repository
+- name: Add Jenkins Stable Repository
   apt_repository:
     repo: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
     filename: jenkins

@@ -1,6 +1,6 @@
 upstream web_cluster {
     server 192.168.1.232:3000;
-    server 192.168.1.233:3000;
+    server 192.168.1.241:3000;
 }
 
 server {
@@ -8,5 +8,8 @@ server {
 
     location / {
         proxy_pass http://web_cluster;
+      
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
     }
 }
