@@ -1,13 +1,19 @@
-- name: Install Java
+- name: Install Java 17 (Required for newer Jenkins)
   apt:
-    name: openjdk-11-jdk
+    name: openjdk-17-jdk
     state: present
     update_cache: yes
 
-- name: Add Jenkins repo
-  shell: |
-    wget -q -O - https://pkg.jenkins.io/debian/jenkins.io.key | apt-key add -
-    echo "deb http://pkg.jenkins.io/debian binary/" > /etc/apt/sources.list.d/jenkins.list
+- name: Download Jenkins GPG Key
+  get_url:
+    url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+    dest: /usr/share/keyrings/jenkins-keyring.asc
+
+- name: Add Jenkins Repository
+  apt_repository:
+    repo: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
+    filename: jenkins
+    state: present
 
 - name: Install Jenkins
   apt:

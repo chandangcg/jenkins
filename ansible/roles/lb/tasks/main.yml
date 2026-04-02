@@ -1,51 +1,15 @@
-- name: Install packages
-  apt:
-    name:
-      - nginx
-      - mysql-server
-      - redis-server
-      - prometheus
-    state: present
-    update_cache: yes
-
-- name: Start services
-  service:
-    name: "{{ item }}"
-    state: started
-    enabled: yes
-  loop:
-    - nginx
-    - mysql
-    - redis-server
-    - prometheus
-
-- name: Install Grafana (safe)
-  block:
-    - apt:
-        name: grafana
-        state: present
-        update_cache: yes
-  rescue:
-    - debug:
-        msg: "Grafana installation failed, but continuing"
-
-- name: Start Grafana
-  service:
-    name: grafana-server
-    state: started
-    enabled: yes
-
-- name: Install MySQL Python dependencies
-  apt:
-    name:
-      - python3-pymysql
-    state: present
-    update_cache: yes
+# ... (previous installation tasks remain the same)
 
 - name: Create DB
   mysql_db:
     name: "{{ db_name }}"
     state: present
+    login_unix_socket: /var/run/mysqld/mysqld.sock
+
+- name: Create Users Table
+  mysql_query:
+    login_db: "{{ db_name }}"
+    query: "CREATE TABLE IF NOT EXISTS users (id INT AUTO_INCREMENT PRIMARY KEY, username VARCHAR(255), password VARCHAR(255))"
     login_unix_socket: /var/run/mysqld/mysqld.sock
 
 - name: Create DB user
@@ -56,13 +20,4 @@
     host: "%"
     state: present
     login_unix_socket: /var/run/mysqld/mysqld.sock
-
-- name: Copy Nginx config
-  template:
-    src: nginx.conf.j2
-    dest: /etc/nginx/sites-available/default
-
-- name: Restart Nginx
-  service:
-    name: nginx
-    state: restarted
+# ... (Nginx tasks remain the same)

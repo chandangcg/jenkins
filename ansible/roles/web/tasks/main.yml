@@ -1,20 +1,21 @@
-- name: Remove old Node.js completely
-  apt:
-    name:
-      - nodejs
-      - libnode72
-    state: absent
-    purge: yes
+- name: Ensure deployment directory exists
+  file:
+    path: "{{ deploy_path }}"
+    state: directory
+    owner: "{{ ansible_user }}"
+    mode: '0755'
   become: yes
 
-- name: Remove unused packages
-  apt:
-    autoremove: yes
+- name: Copy application files
+  copy:
+    src: app/
+    dest: "{{ deploy_path }}/"
   become: yes
 
-- name: Clean apt cache
-  apt:
-    autoclean: yes
+- name: Deploy environment configuration
+  template:
+    src: env.j2
+    dest: "{{ deploy_path }}/.env"
   become: yes
 
 - name: Install NodeSource repo (Node 18)
@@ -30,13 +31,6 @@
     update_cache: yes
   become: yes
 
-- name: Check Node version
-  command: node -v
-  register: node_version
-
-- debug:
-    var: node_version.stdout
-
 - name: Install PM2
   npm:
     name: pm2
@@ -44,12 +38,12 @@
   become: yes
 
 - name: Install app dependencies
-  shell: npm install
-  args:
-    chdir: /opt/nodeapp
+  npm:
+    path: "{{ deploy_path }}"
 
 - name: Start Node app with PM2
   shell: |
     pm2 start app.js --name nodeapp || pm2 restart nodeapp
   args:
-    chdir: /opt/nodeapp
+    chdir: "{{ deploy_path }}"
+  become: yes
