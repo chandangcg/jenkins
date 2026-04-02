@@ -1,31 +1,43 @@
-- name: Remove broken Jenkins list file
-  file:
-    path: /etc/apt/sources.list.d/jenkins.list
-    state: absent
+- name: Remove legacy Jenkins repo files and keys
+  shell: |
+    rm -f /etc/apt/sources.list.d/jenkins.list
+    apt-key del 7198F4B714ABFC68 || true
+  become: yes
 
-- name: Install Java 17
+- name: Install dependencies
   apt:
-    name: openjdk-17-jdk
+    name: 
+      - gnupg
+      - ca-certificates
+      - curl
     state: present
-    update_cache: yes
+  become: yes
 
-- name: Download Jenkins GPG Key
-  get_url:
-    url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
-    dest: /usr/share/keyrings/jenkins-keyring.asc
-    mode: '0644'
+- name: Create keyring directory
+  file:
+    path: /usr/share/keyrings
+    state: directory
+    mode: '0755'
 
-- name: Add Jenkins Stable Repository
+- name: Download Jenkins GPG Key to keyring
+  shell: curl -fsSL https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key | gpg --dearmor -o /usr/share/keyrings/jenkins-keyring.gpg
+  args:
+    creates: /usr/share/keyrings/jenkins-keyring.gpg
+
+- name: Add Jenkins Stable Repository with signed-by
   apt_repository:
-    repo: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.asc] https://pkg.jenkins.io/debian-stable binary/"
+    repo: "deb [signed-by=/usr/share/keyrings/jenkins-keyring.gpg] https://pkg.jenkins.io/debian-stable binary/"
     filename: jenkins
     state: present
-
-- name: Install Jenkins
-  apt:
-    name: jenkins
-    state: present
     update_cache: yes
+
+- name: Install Java 17 and Jenkins
+  apt:
+    name:
+      - openjdk-17-jdk
+      - jenkins
+    state: present
+  become: yes
 
 - name: Start Jenkins
   service:
